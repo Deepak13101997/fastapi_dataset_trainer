@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>YOLO Dataset Trainer</title>
+<link rel="stylesheet" href="{{ url_for('static', path='style.css') }}"/>
+</head>
+<body>
+<div class="page">
+
+  <!-- ================= STEP 1: CLASS SEPARATOR ================= -->
+  <h2>Separate Dataset by Class</h2>
+  <section class="panel wide">
+    <div class="row">
+      <label class="filebtn">Choose file
+        <input type="file" id="sep-file" accept=".zip"/>
+      </label>
+      <span class="fname" id="sep-fname">No file chosen</span>
+      <button class="btn" id="sep-run" disabled>Separate by Class</button>
+    </div>
+    <div class="msg" id="sep-msg" hidden></div>
+    <pre class="report" id="sep-report" hidden></pre>
+    <div class="class-grid" id="sep-classes"></div>
+  </section>
+
+  <div class="titles">
+    <h1>Positive dataset trainer <small class="muted">(object detection)</small></h1>
+    <h1>Negative dataset trainer <small class="muted">(non-object)</small></h1>
+  </div>
+
+  <div class="panels">
+
+    <!-- ================= POSITIVE (object detection) ================= -->
+    <section class="panel" id="panel-pos" data-kind="object">
+      <div class="row">
+        <label class="filebtn">Choose files
+          <input type="file" id="pos-file" accept=".zip" multiple/>
+        </label>
+        <span class="fname" id="pos-fname">No files chosen</span>
+      </div>
+      <div class="chip-list" id="pos-chips"></div>
+      <button class="btn" id="pos-check" disabled>Check Dataset</button>
+
+      <div class="card" id="pos-card" hidden>
+        <h3>Train /Valid / Test Split</h3>
+        <div class="stats">
+          <div class="stat"><b id="pos-pct-train">0%</b><span class="badge pink">Train</span><small id="pos-n-train">0 images</small></div>
+          <div class="stat"><b id="pos-pct-valid">0%</b><span class="badge blue">Valid</span><small id="pos-n-valid">0 images</small></div>
+          <div class="stat"><b id="pos-pct-test">0%</b><span class="badge orange">Test</span><small id="pos-n-test">0 images</small></div>
+        </div>
+        <div class="bar"><i id="pos-bar-train" class="pink"></i><i id="pos-bar-valid" class="blue"></i><i id="pos-bar-test" class="orange"></i></div>
+        <p class="hint">Adjust the train/valid/test ratios or add more annotated images to your dataset. test needs &ge; 2</p>
+      </div>
+
+      <h2 class="rt">Dataset Validation Result</h2>
+      <pre class="report" id="pos-report">Choose one or more .zip datasets and press "Check Dataset"&hellip;</pre>
+      <div class="file-reports" id="pos-file-reports"></div>
+
+      <!-- Step 4 : class name (checked against every uploaded folder) -->
+      <div class="step" id="pos-step-class" hidden>
+        <h3>Class Name</h3>
+        <div class="row">
+          <input id="pos-class" type="text" placeholder="Enter the class name"/>
+          <button class="btn" id="pos-compare">Compare Class Name</button>
+        </div>
+        <div class="class-table" id="pos-class-table"></div>
+        <div class="msg" id="pos-class-msg" hidden></div>
+        <button class="btn warn" id="pos-class-change" hidden>Change class name in all folders&rsquo; yaml</button>
+        <button class="btn primary" id="pos-class-continue" hidden>Combine folders &amp; continue</button>
+      </div>
+
+      <!-- Step 5-6 : combine (all zips -> one folder) + download -->
+      <div class="step" id="pos-step-final" hidden>
+        <h3>Combine &amp; Download</h3>
+        <div class="msg ok" id="pos-combine-msg" hidden></div>
+        <div class="details" id="pos-details"></div>
+        <div class="row">
+          <input id="pos-folder" type="text" placeholder="Enter the folder name"/>
+          <button class="btn" id="pos-finalize">Prepare Download</button>
+        </div>
+        <div class="msg" id="pos-final-msg" hidden></div>
+        <div class="row" id="pos-dl-row" hidden>
+          <a class="btn primary" id="pos-dl" href="#">&#11015; Download Positive Dataset</a>
+          <button class="btn" id="pos-continue">Continue to balance check &#10148;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NEGATIVE (non object detection) ================= -->
+    <section class="panel" id="panel-neg" data-kind="nonobject">
+      <div class="row">
+        <label class="filebtn">Choose files
+          <input type="file" id="neg-file" accept=".zip" multiple/>
+        </label>
+        <span class="fname" id="neg-fname">No files chosen</span>
+      </div>
+      <div class="chip-list" id="neg-chips"></div>
+      <button class="btn" id="neg-check" disabled>Check Dataset</button>
+
+      <div class="card" id="neg-card" hidden>
+        <h3>Train / Valid / Test Split <small class="muted">(combined across all uploaded folders)</small></h3>
+        <div class="stats">
+          <div class="stat"><b id="neg-pct-train">0%</b><span class="badge pink">Train</span><small id="neg-n-train">0 images</small></div>
+          <div class="stat"><b id="neg-pct-valid">0%</b><span class="badge blue">Valid</span><small id="neg-n-valid">0 images</small></div>
+          <div class="stat"><b id="neg-pct-test">0%</b><span class="badge orange">Test</span><small id="neg-n-test">0 images</small></div>
+        </div>
+        <div class="bar"><i id="neg-bar-train" class="pink"></i><i id="neg-bar-valid" class="blue"></i><i id="neg-bar-test" class="orange"></i></div>
+        <p class="hint">Adjust the train/valid/test ratios or add more annotated images to your dataset. test needs &ge; 2</p>
+      </div>
+
+      <h2 class="rt">Dataset Validation Result</h2>
+      <pre class="report" id="neg-report">Choose one or more .zip datasets and press "Check Dataset"&hellip;</pre>
+      <div class="file-reports" id="neg-file-reports"></div>
+
+      <!-- Step 7:3 -->
+      <div class="step" id="neg-step-clean" hidden>
+        <h3>Remove Label Data &amp; yaml</h3>
+        <button class="btn" id="neg-clean">Clean Labels &amp; Remove yaml</button>
+        <div class="msg" id="neg-clean-msg" hidden></div>
+      </div>
+
+      <!-- Step 8-9 : combine (all zips -> one folder) + download -->
+      <div class="step" id="neg-step-final" hidden>
+        <h3>Combine &amp; Download</h3>
+        <div class="msg ok" id="neg-combine-msg" hidden></div>
+        <div class="details" id="neg-details"></div>
+        <div class="row">
+          <input id="neg-folder" type="text" placeholder="Enter the folder name"/>
+          <button class="btn" id="neg-finalize">Prepare Download</button>
+        </div>
+        <div class="msg" id="neg-final-msg" hidden></div>
+        <div class="row" id="neg-dl-row" hidden>
+          <a class="btn primary" id="neg-dl" href="#">&#11015; Download Negative Dataset</a>
+          <button class="btn" id="neg-continue">Continue: Combine Both Datasets &#10148;</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= STEP 9-10: COMPARE + BUILD TRAIN DATASET ================= -->
+  <section class="panel wide" id="panel-balance" hidden>
+    <h2>Compare Object vs Non-Object Counts</h2>
+    <p class="hint">The object detection dataset must not contain more images than the non-object dataset.</p>
+    <div class="msg" id="bal-msg" hidden></div>
+    <div class="bal-grid">
+      <div class="bal-box pos-bg"><b id="bal-pos-count">0</b><span>Object detection images</span></div>
+      <div class="bal-box neg-bg"><b id="bal-neg-count">0</b><span>Non-object images</span></div>
+    </div>
+    <div id="bal-verdict"></div>
+
+    <h2 id="train-title" hidden>Step 10 &middot; Combined Train Dataset</h2>
+    <div class="details" id="train-details" hidden></div>
+    <div class="row" id="train-final-row" hidden>
+      <input id="train-folder" type="text" placeholder="Enter the folder name"/>
+      <button class="btn" id="train-finalize">Prepare Download</button>
+    </div>
+    <div class="msg" id="train-final-msg" hidden></div>
+    <div class="row" id="train-dl-row" hidden>
+      <a class="btn primary" id="train-dl" href="#">&#11015; Download Train Dataset</a>
+    </div>
+    <div class="msg ok big" id="train-ready" hidden>Dataset is ready for training!</div>
+  </section>
+</div>
+<script src="{{ url_for('static', path='app.js') }}"></script>
+</body>
+</html>
